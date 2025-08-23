@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sedyamithra - Agricultural Companion</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .crop-stage {
+            transition: all 0.3s ease;
+        }
+        .crop-stage.active {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .language-option:hover {
+            transform: translateY(-3px);
+        }
+        .scan-animation {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header with Logo -->
+    <header class="bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <img src="logo.jpeg" alt="Sedyamithra Logo" class="h-10 w-10 rounded-full">
+                <h1 class="text-2xl font-bold">Sedyamithra</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative group">
+                    <button id="languageBtn" class="flex items-center space-x-1 px-3 py-1 bg-white bg-opacity-20 rounded-full">
+                        <i class="fas fa-globe"></i>
+                        <span id="currentLanguage">English</span> 
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </button>
+                    
+                    <div id="languageDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white text-gray-800 rounded-md shadow-lg py-1 z-10">
+                        <a href="#" class="block px-4 py-2 language-option hover:bg-green-100" data-lang="en">English</a>
+                        <a href="#" class="block px-4 py-2 language-option hover:bg-green-100" data-lang="hi">हिन्दी</a>
+                        <a href="#" class="block px-4 py-2 language-option hover:bg-green-100" data-lang="ta">தமிழ்</a>
+                        <a href="#" class="block px-4 py-2 language-option hover:bg-green-100" data-lang="te">తెలుగు</a>
+                    </div>
+                </div>
+                <button id="voiceAssistantBtn" class="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30">
+                    <i class="fas fa-microphone"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Navigation Tabs -->
+        <div class="flex border-b border-gray-200 mb-8">
+            <button class="tab-btn active px-6 py-3 font-medium text-sm border-b-2 border-green-600 text-green-600" data-tab="growth" data-tabtext="Crop Growth">Crop Growth</button>
+            <button class="tab-btn active px-6 py-3 font-medium text-sm border-b-2 border-green-600 text-green-600" data-tab="fertilizer" data-tabtext="Fertilizer Guide">Fertilizer Guide</button>
+            <button class="tab-btn px-6 py-3 font-medium text-sm border-b-2 border-green-600 text-green-600" data-tab="scan" data-tabtext="Scan Fertilizer">Scan Fertilizer</button>
+        </div>
+
+        <!-- Tab Contents -->
+        <div class="py-4">
+            <!-- Crop Growth Stages -->
+            <script src="cropStages.js" defer></script>
+            <div id="growth" class="tab-content active">
+                <h2 class="text-2xl font-bold mb-6 text-green-800">Crop Growth Stages</h2> 
+                <div class="mb-6">
+                    <section>
+                        <label class="block text-gray-700 mb-2 font-medium">Select Crop:</label>
+                        <select id="cropSelector" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"> 
+                            <option value="rice">Rice</option>
+                            <option value="wheat">Wheat</option>
+                            <option value="corn">Corn</option>
+                            <option value="cotton">Cotton</option>
+                        </select>
+
+                        <!-- New Growth Stages Section -->
+                        <section id="growthStagesSection" class="mt-6 p-4 border rounded-lg bg-white shadow-sm">
+                            <label class="block text-gray-700 mb-2 font-medium">Select Growth Stage:</label>
+                            <select id="growthStages" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                            <button id="showInfo" class="mt-4 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition">Show Information</button>
+                            <div id="stageInfo" class="mt-6 p-4 bg-green-50 rounded-lg hidden">
+                                <!-- Information about the selected crop stage will be displayed here -->
+                                <h3 id="selectedStageTitle" class="text-xl font-semibold text-green-800 mb-2"></h3>
+                                <p id="selectedStageDescription" class="text-gray-700 mb-3"></p>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 font-medium">Duration:</label>
+                                    <p id="selectedStageDuration" class="text-gray-700"></p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 font-medium">Ideal Conditions:</label>
+                                    <ul id="selectedStageConditions" class="list-disc list-inside text-gray-700">
+                                        <!-- Conditions will be populated here -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </section>
+                        <!-- End New Growth Stages Section -->
+
+                    </section>
+                    <div id="stageProgress" class="mb-8 hidden">
+                        <div class="flex justify-between relative mb-3">
+                            <!-- Stage markers will be dynamically generated -->
+                            <div class="absolute top-4 left-0 right-0 h-1 bg-gray-200 z-0"></div>
+                            <div id="progressBar" class="absolute top-4 h-1 bg-green-500 z-10" style="width: 0%"></div>
+                        </div>
+                    <div class="flex justify-between">
+                        <!-- Stage markers will be inserted here by JavaScript -->
+                    </div>
+                </div> <div id="stageDetails" class="hidden">
+                    <div class="bg-green-50 rounded-lg p-6 mb-6">
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 id="stageTitle" class="text-xl font-semibold text-green-800 mb-3">Stage Title</h3>
+                                <p id="stageDescription" class="text-gray-700 mb-4">Stage description goes here.</p>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 font-medium">Duration:</label>
+                                    <p id="stageDuration" class="text-gray-700">Duration goes here.</p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 font-medium">Ideal Conditions:</label>
+                                    <ul id="stageConditions" class="list-disc list-inside text-gray-700">
+                                        <!-- Conditions will be populated here -->
+                                    </ul>
+                                </div>
+                            </div>
+                           <div class="flex justify-center">
+                                <img id="stageImage" src="rice.jpg.webp" alt="Stage image" class="rounded-lg shadow-sm h-48 object-cover">
+                            </div> 
+                        </div>
+                    </div>
+        
+                    <h3 class="text-xl font-semibold text-gray-800 mb-3">Recommended Fertilizers</h3>
+                    <div id="fertilizerRecommendations" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Fertilizer cards will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+            <!-- Fertilizer Guide -->
+            <div id="fertilizer" class="tab-content">
+                <h2 class="text-2xl font-bold mb-6 text-green-800">Fertilizer Guide</h2>
+    
+                <div class="mb-6">
+                <div class="relative">
+                    <input type="text" id="fertilizerSearch" placeholder="Search fertilizers..." class="w-full px-4 py-2 border rounded-lg pl-10 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+            </div>
+    
+            <div id="searchResults" class="space-y-6">
+                <!-- Exact matches will be shown here -->
+                <div id="exactMatchesSection" class="hidden">
+                    <h3 class="text-lg font-semibold text-green-700 mb-2">Exact Matches</h3>
+                    <div class="overflow-x-auto">
+                        <div id="exactMatchResults" class="flex flex-nowrap space-x-4 pb-2"></div>
+                    </div>
+                </div>
+                <!-- Remaining fertilizers will be shown here -->
+                <div id="remainingFertilizersSection">
+                    <h3 class="text-lg font-semibold text-green-700 mb-2">All Fertilizers</h3>
+                    <div class="overflow-x-auto">
+                        <div id="remainingFertilizersResults" class="flex flex-nowrap space-x-4 pb-2"></div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- Scan Fertilizer -->
+            <div id="scan" class="tab-content">
+                <h2 class="text-2xl font-bold mb-6 text-green-800">Scan Fertilizer</h2>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="font-semibold mb-4 text-lg text-green-700">Scan Fertilizer Label</h3>
+                        <div class="scan-animation border-2 border-green-400 border-dashed rounded-lg p-4 flex flex-col items-center justify-center h-64 mb-4">
+                            <i class="fas fa-camera text-4xl text-green-500 mb-2"></i>
+                            <p class="text-green-700 mb-2">Click to scan fertilizer label</p>
+                            <p class="text-gray-500 text-sm">or upload an image</p>
+                            <input type="file" id="scanInput" accept="image/*" class="hidden">
+                        </div>
+                        <button id="scanBtn" class="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition">
+                            <i class="fas fa-search mr-2"></i> Scan Now
+                        </button>
+                    </div>
+                    
+                    <div id="scanResult" class="bg-white rounded-lg shadow-md p-6 hidden">
+                        <h3 class="font-semibold mb-4 text-lg text-green-700">Scan Results</h3>
+                        <div id="scanResultContent">
+                            <!-- Scan results will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Voice Assistant Modal -->
+    <div id="voiceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-green-700">Voice Assistant</h3>
+                <button id="closeVoiceModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="voiceStatus" class="text-center py-8">
+                <i class="fas fa-microphone text-4xl text-green-500 mb-4"></i>
+                <p>Click the microphone and speak your question</p>
+            </div>
+            <div id="voiceResponse" class="hidden bg-green-50 p-4 rounded-lg mb-4">
+                <!-- Voice response will be displayed here -->
+            </div>
+            <button id="startListening" class="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition">
+                <i class="fas fa-microphone mr-2"></i> Start Listening
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Sample data for crops and fertilizers
+        const cropData = {
+             rice: {
+                name: "Rice",
+                scientificName: "Oryza sativa",
+                cycle: "90-120 days",
+                stages: [
+                    {
+                        name: "Germination",
+                        description: "The seed absorbs water and sprouts, developing roots and a shoot. Requires warm temperatures (25-30°C) and moist soil.",
+                        duration: "5-10 days",
+                        conditions: [
+                            "Soil temperature: 25-30°C",
+                            "Keep soil moist but not waterlogged",
+                            "Seed treatment recommended"
+                        ],
+                        idealFertilizers: [
+                            {
+                                name: "Seed Starter (NPK 5-10-10)",
+                                type: "Starter Fertilizer",
+                                purpose: "Promotes strong root development",
+                                application: "Mix with soil before planting",
+                                npk: "5-10-10",
+                                precautions: "Follow manufacturer's instructions."                            
+                           }
+                        ],
+                        image: "assets/images/rice-germination.jpg",
+                        currentStage: 1,
+                        percentComplete: 5
+                    },
+                    {
+                        name: "Seedling",
+                        description: "Young plants develop in nursery before transplantation. Requires careful water management.",
+                        duration: "20-25 days",
+                        conditions: [
+                            "Maintain water depth: 2-5cm",
+                            "Day temp: 25-30°C, Night: 20°C",
+                            "Protect from pests"
+                        ],
+                        idealFertilizers: [
+                            {
+                                name: "Urea (46-0-0)",
+                                type: "Nitrogen",
+                                purpose: "Promotes leafy growth",
+                                application: "10kg per 100 sq.m nursery",
+                                npk: "46-0-0",
+                                precautions: "Avoid direct contact with leaves."
+                            }
+                        ],
+                        image: "assets/images/rice-seedling.jpg",
+                        currentStage: 2,
+                        percentComplete: 25
+                    },
+                    {
+                        name: "Tillering",
+                        description: "Plant develops multiple stems. Critical for determining yield potential.",
+                        duration: "30-40 days",
+                        conditions: [
+                            "Water depth: 5-10cm",
+                            "Full sunlight required",
+                            "Weed control essential"
+                        ],
+                        idealFertilizers: [
+                            {
+                                name: "DAP (18-46-0)",
+                                type: "Phosphorus",
+                                purpose: "Stimulates tiller development",
+                                application: "40kg/acre in 2 splits",
+                                npk: "18-46-0",
+                                precautions: "Ensure proper soil moisture."
+                            }
+                        ],
+                        image: "assets/images/rice-tillering.jpg",
+                        currentStage: 3,
+                        percentComplete: 5,
+                    },
+                    {
+                        name: "Flowering",
+                        description: "Panicles emerge and pollination occurs. Requires careful water and nutrient management.",
+                        duration: "15-20 days",
+                        conditions: [
+                            "Critical water need",
+                            "Avoid water stress",
+                            "Monitor for pests"
+                        ],
+                        idealFertilizers: [
+                            {
+                                name: "Potash (0-0-50)",
+                                type: "Potassium",
+                                purpose: "Improves grain filling",
+                                application: "20kg/acre at panicle initiation",
+                                npk: "0-0-50",
+                                precautions: "Avoid excessive application."
+                            }
+                        ],
+                        image: "assets/images/rice-flowering.jpg",
+                        currentStage: 4,
+                        percentComplete: 75,
+                    },
+                    {
+                        name: "Maturity",
+                        description: "Grains harden and moisture content decreases. Harvest when 80-85% grains are straw-colored.",
+                        duration: "25-30 days",
+                        conditions: [
+                            "Gradual water reduction",
+                            "Monitor grain moisture",
+                            "Prepare for harvest"
+                        ],
+                        idealFertilizers: [],
+                        image: "assets/images/rice-maturity.jpg",
+                        currentStage: 5,
+                    }
+                ]
+            },
+            wheat: {
+                name: "Wheat",
+                scientificName: "Triticum aestivum",
+                cycle: "110-130 days",
+                stages: [
+                    {
+                        name: "Germination",
+                        description: "Seeds absorb moisture and begin to sprout. Requires cool temperatures (10-20°C) and adequate moisture.",
+                        duration: "7-10 days",
+                        conditions: [
+                            "Soil temperature: 10-20°C",
+                            "Seed treatment recommended",
+                            "Keep soil moist but not waterlogged"
+                        ],
+                        idealFertilizers: [
+                            {
+                                name: "Starter Fertilizer (NPK 10-20-10)",
+                                type: "Starter Fertilizer",
+                                purpose: "Promotes early root development",
+                                application: "Apply at planting",
+                                npk: "0-0-50",
+                                precautions: "Avoid excessive application."
+                            }
+                        ],
+                        image: "assets/images/wheat-germination.jpg",
+                        currentStage: 1,
+                        percentComplete: 10
+                    },
+                    {
+                        name: "Seedling",
+                        description: "Young plants develop and establish roots. Requires consistent moisture and sunlight.",
+                        duration: "14-21 days",
+                        conditions: [
+                            "Maintain soil moisture",
+                            "Day temp: 15-25°C",
+                        ],
+                        idealFertilizers: [
+                            {
+                                name: "Urea (46-0-0)",
+                                type: "Nitrogen",
+                                purpose: "Encourages leafy growth",
+                                application: "Apply 50kg/ha at tillering",
+                                npk: "46-0-0",
+                                precautions: "Avoid direct contact with leaves."
+                            }
+                        ],
+                        image: "assets/images/wheat-seedling.jpg",
+                        currentStage: 2,
+                        percentComplete: 30
+                    },
+{
+name: "Tillering",
+description: "Wheat plants develop multiple tillers, increasing yield potential.",
+                duration: "30-40 days",
+                conditions: [
+                    "Water depth: 5-10cm",
+                    "Full sunlight required",
+                    "Weed control essential"
+                ],
+                idealFertilizers: [
+                    {
+                        name: "DAP (18-46-0)",
+                        type: "Phosphorus",
+                        purpose: "Stimulates tiller development",
+                        application: "Apply 40kg/ha at planting",
+                        npk: "18-46-0",
+                        precautions: "Ensure proper soil moisture."
+                    }
+                ],
+                image: "assets/images/wheat-tillering.jpg",
+                currentStage: 3,
+                percentComplete: 60
+            },
+            {
+                name: "Flowering",
+                description: "Wheat heads emerge and pollination occurs. Requires careful water management.",
+                duration: "15-20 days",
+                conditions: [
+                    "Critical water need",
+                    "Avoid water stress",
+                    "Monitor for pests"
+                ],
+                idealFertilizers: [
+                    {
+                        name: "Potash (0-0-50)",
+                        type: "Potassium",
+                        purpose: "Improves grain filling",
+                        application: "Apply 20kg/ha at flowering",
+                        npk: "0-0-50",
+                        precautions: "Avoid excessive application."
+                    }
+                ],
+                image: "assets/images/wheat-flowering.jpg",
+                currentStage: 4,
+                percentComplete: 80
+            },
+            {
+                name: "Maturity",
+                description: "Grains harden and moisture content decreases. Harvest when grains are hard and straw is yellow.",
+                duration: "20-30 days",
+                conditions: [
+                    "Gradual water reduction",
+                    "Monitor grain moisture",
+                    "Prepare for harvest"
+                ],
+                idealFertilizers: [],
+                image: "assets/images/wheat-maturity.jpg",
+                currentStage: 5,
+                percentComplete: 100
+            }
+        ]
+    },
+    corn: {
+        name: "Corn",
+        scientificName: "Zea mays",
+        cycle: "60-100 days",
+        stages: [
+            {
+                name: "Germination",
+                description: "Seeds absorb moisture and begin to sprout. Requires warm soil (15-30°C) and adequate moisture.",
+                duration: "5-10 days",
+                conditions: [
+                    "Soil temperature: 15-30°C",
+                    "Keep soil moist but not waterlogged",
+                    "Seed treatment recommended"
+                ],
+                idealFertilizers: [
+                    {
+                        name: "Starter Fertilizer (NPK 10-20-30)",
+                        type: "Starter Fertilizer",
+                        purpose: "Promotes early root development",
+                        application: "Apply at planting",
+                        npk: "10-20-30",
+                        precautions: "Follow manufacturer's instructions."
+                    }
+                ],
+                image: "assets/images/corn-germination.jpg",
+                currentStage: 1,
+                percentComplete: 10
+            },
+            {
+                name: "Seedling",
+                description: "Young plants develop and establish roots. Requires consistent moisture and sunlight.",
+                duration: "14-21 days",
+                conditions: [
+                    "Maintain soil moisture",
+                    "Day temp: 20-30°C",
+                    "Protect from pests"
+                ],
+                idealFertilizers: [
+                    {
+                        name: "Urea (46-0-0)",
+                        type: "Nitrogen",
+                        purpose: "Encourages leafy growth",
+                        application: "Apply 50kg/ha at V6 stage",
+                        npk: "46-0-0",
+                        precautions: "Avoid direct contact with leaves."
+                    }
+                ],
+                image: "assets/images/corn-seedling.jpg",
+                currentStage: 2,
+                percentComplete: 30
+            },
+            {
+                name: "Vegetative",
+                description: "Corn plants grow rapidly, developing leaves and stems.",
+                duration: "30-40 days",
+                conditions: [
+                    "Water depth: 5-10cm",
+                    "Full sunlight required",
+                    "Weed control essential"
+                ],
+                idealFertilizers: [
+                    {
+                        name: "DAP (18-46-0)",
+                        type: "Phosphorus",
+                        purpose: "Stimulates vegetative growth",
+                        application: "Apply 40kg/ha at planting",
+                        npk: "18-46-0",
+                        precautions: "Ensure proper soil moisture."
+                    }
+                ],
+                image: "assets/images/corn-vegetative.jpg",
+                currentStage: 3,
+                percentComplete: 60
+            },
+            {
+                name: "Flowering",
+                description: "Corn tassels emerge and pollination occurs. Requires careful water management.",
+                duration: "15-20 days",
+                conditions: [
+                    "Critical water need",
+                    "Avoid water stress",
+                    "Monitor for pests"
+                ],
+                idealFertilizers: [
+                    {
+                        name: "Potash (0-0-50)",
+                        type: "Potassium",
+                        purpose: "Improves grain filling",
+                        application: "Apply 20kg/ha at flowering",
+                        npk: "0-0-50",
+                        precautions: "Avoid excessive application."
+                    }
+                ],
+                image: "assets/images/corn-flowering.jpg",
+                currentStage: 4,
+                percentComplete: 80
+            },
+            {
+                name: "Maturity",
+                description: "Grains harden and moisture content decreases. Harvest when grains are hard and kernels are dented.",
+                duration: "20-30 days",
+                conditions: [
+                    "Gradual water reduction",
+                    "Monitor grain moisture",
+                    "Prepare for harvest"
+                ],
+                idealFertilizers: [],
+                image: "assets/images/corn-maturity.jpg",
+                currentStage: 5,
+                percentComplete: 100
+            }
+        ]
+    },
+    cotton: {
+        name: "Cotton",
+        scientificName: "Gossypium spp.",
+        cycle: "150-180 days",
+        stages: [
+            {
+                name: "Germination",
+                description: "Seeds absorb moisture and begin to sprout. Requires warm soil (20-30°C) and adequate moisture.",
+                duration: "7-10 days",
+                conditions: [
+                    "Soil temperature: 20-30°C",
+                    "Keep soil moist but not waterlogged",
+                    "Seed treatment recommended"
+                ],
+                idealFertilizers: [
+                    {
+                        name: "Starter Fertilizer (NPK 10-20-20)",
+                        type: "Starter Fertilizer",
+                        purpose: "Promotes early root development",
+                        application: "Apply at planting",
+                        npk: "10-20-20",
+                        precautions: "Follow manufacturer's instructions."
+                    }
+                ],
+                image: "assets/images/cotton-germination.jpg",
+                currentStage: 1,
+                percentComplete: 10
+            },
+            {
+                name: "Seedling",
+                description: "Young plants develop and establish roots. Requires consistent moisture and sunlight.",
+                duration: "14-21 days",
+                conditions: [
+                    "Maintain soil moisture",
+                    "Day temp: 25-30°C",
+                    "Protect from pests"
+                ],
+                idealFertilizers: [
+                    {
+                        name: "Urea (46-0-0)",
+                        type: "Nitrogen",
+                        purpose: "Encourages leafy growth",
+                        application: "Apply 50kg/ha at 4-6 leaf stage",
+                        npk: "46-0-0",
+                        precautions: "Avoid direct contact with leaves."
+                    }
+                ],
+                image: "assets/images/cotton-seedling.jpg",
+                currentStage: 2,
+                percentComplete: 30
+            },
+            {
+                name: "Vegetative",
+                description: "Cotton plants grow rapidly, developing leaves and stems.",
+                duration: "30-40 days",
+                conditions: [
+                    "Water depth: 5-10cm",
+                    "Full sunlight required",
+                    "Weed control essential"
+                ],
+                idealFertilizers: [
+                    {
+                        name: "DAP (18-46-0)",
+                        type: "Phosphorus",
+                        purpose: "Stimulates vegetative growth",
+                        application: "Apply 40kg/ha at planting",
+                        npk: "18-46-0",
+                        precautions: "Ensure proper soil moisture."
+                    }
+                ],
+                image: "assets/images/cotton-vegetative.jpg",
+                currentStage: 3,
+                percentComplete: 60
+            },
+            {
+                name: "Flowering",
+                description: "Cotton flowers bloom and pollination occurs. Requires careful water management.",
+                duration: "15-20 days",
+                conditions: [
+                    "Critical water need",
+                    "Avoid water stress",
+                    "Monitor for pests"
+                ],
+                idealFertilizers: [
+                    {
+                        name: "Potash (0-0-50)",
+                        type: "Potassium",
+                        purpose: "Improves fiber quality",
+                        application: "Apply 20kg/ha at flowering",
+                        npk: "0-0-50",
+                        precautions: "Avoid excessive application."
+                    }
+                ],
+                image: "assets/images/cotton-flowering.jpg",
+                currentStage: 4,
+                percentComplete: 80
+            },
+            {
+                name: "Maturity",
+                description: "Bolls open and fibers are ready for harvest. Monitor for pests and diseases.",
+                duration: "20-30 days",
+                conditions: [
+                    "Gradual water reduction",
+                    "Monitor boll opening",
+                    "Prepare for harvest"
+                ],
+                idealFertilizers: [],
+                image: "assets/images/cotton-maturity.jpg",
+                currentStage: 5,
+                percentComplete: 100
+            }
+        ]
+    }
+};
+        const fertilizerData = [
+        {
+            name: "Urea",
+            type: "Nitrogen",
+            npk: "46-0-0",
+            description: "The most concentrated nitrogen fertilizer (46% N), highly soluble in water.",
+            application: "Apply 40-50 kg/acre in 2-3 splits during vegetative growth.",
+            precautions: "Avoid surface application without incorporation.",
+            crops: ["Rice", "Wheat", "Corn"],
+            image: "urea.jpeg"
+        },
+        {
+            name: "DAP",
+            type: "Phosphorus",
+            npk: "18-46-0",
+            description: "Diammonium phosphate provides nitrogen and phosphorus in readily available forms.",
+            application: "Apply 20-25 kg/acre at sowing or transplanting.",
+            precautions: "Avoid direct contact with seeds.",
+            crops: ["Rice", "Wheat", "Corn", "Cotton"],
+            image: "dap.jpeg"
+        },
+        {
+            name: "MOP",
+            type: "Potassium",
+            npk: "0-0-60",
+            description: "Muriate of potash is a potassium fertilizer that enhances crop quality and yield.",
+            application: "Apply 30-40 kg/acre during the growing season.",
+            precautions: "Avoid excessive application as it can lead to salt accumulation.",
+            crops: ["Rice", "Wheat", "Corn", "Cotton"],
+            image: "mop.jpeg"
+        },
+        {
+            name: "NPK 20-20-20",
+            type: "Balanced NPK",
+            npk: "20-20-20",
+            description: "A balanced fertilizer providing equal parts of nitrogen, phosphorus, and potassium.",
+            application: "Apply 15-20 kg/acre every 4-6 weeks during the growing season.",
+            precautions: "Ensure proper soil moisture before application.",
+            crops: ["Rice", "Wheat", "Corn", "Cotton"],
+            image: "npk.jpeg"
+        },
+        {
+            name: "Calcium Nitrate",
+            type: "Calcium and Nitrogen",
+            npk: "15.5-0-0 + 19 Ca",
+            description: "Provides both calcium and nitrogen, promoting strong plant growth.",
+            application: "Apply 50-100 kg/acre during the growing season.",
+            precautions: "Avoid mixing with phosphate fertilizers.",
+            crops: ["Rice", "Wheat", "Corn", "Cotton"],
+            image: "cal.jpeg"
+        },
+        {
+            name: "Zinc Sulfate",
+            type: "Micronutrient",
+            npk: "0-0-0 + 36 Zn",
+            description: "Provides essential zinc for crop growth, particularly important for cotton.",
+            application: "Apply 10-15 kg/acre at planting or as a foliar spray.",
+            precautions: "Avoid over-application to prevent toxicity.",
+            crops: ["Rice", "Wheat", "Corn", "Cotton"],
+            image: "zinc.jpeg"
+        },
+        {
+            name: "Potassium Nitrate",
+            type: "Potassium and Nitrogen",
+            npk: "13-0-46",
+            description: "Provides both potassium and nitrogen, enhancing fruit quality and yield.",
+            application: "Apply 20-30 kg/acre during the growing season.",
+            precautions: "Monitor soil moisture levels to prevent leaching.",
+            crops: ["Rice", "Wheat", "Corn", "Cotton"],
+            image: "pot.jpeg"
+        }
+    ];
+
+        // DOM Elements
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const languageBtn = document.getElementById('languageBtn');
+        const languageDropdown = document.getElementById('languageDropdown');
+        const voiceAssistantBtn = document.getElementById('voiceAssistantBtn');
+        const voiceModal = document.getElementById('voiceModal');
+        const closeVoiceModal = document.getElementById('closeVoiceModal');
+        const startListeningBtn = document.getElementById('startListening');
+        const cropSelector = document.getElementById('cropSelector');
+        const scanBtn = document.getElementById('scanBtn');
+        const scanInput = document.getElementById('scanInput');
+        const scanResult = document.getElementById('scanResult');
+
+        //New DOM Elements for Growth Stages
+        const growthStagesDropdown = document.getElementById('growthStages');
+        const showInfoBtn = document.getElementById('showInfo');
+        const stageInfoDiv = document.getElementById('stageInfo');
+        const selectedStageTitle = document.getElementById('selectedStageTitle');
+        const selectedStageDescription = document.getElementById('selectedStageDescription');
+        const selectedStageDuration = document.getElementById('selectedStageDuration');
+        const selectedStageConditions = document.getElementById('selectedStageConditions');
+
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load initial data
+            loadCropData(cropSelector.value);
+            loadFertilizerData();
+            updateGrowthStagesDropdown();
+            // Set up event listeners
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Tab navigation
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    tabBtns.forEach(b => b.classList.remove('active', 'border-green-600', 'text-green-600'));
+                    tabBtns.forEach(b => b.classList.add('text-gray-500'));
+                    this.classList.add('active', 'border-green-600', 'text-green-600');
+                    this.classList.remove('text-gray-500');
+                    
+                    // Show corresponding content
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+
+            // Language dropdown
+            languageBtn.addEventListener('click', function() {
+                languageDropdown.classList.toggle('hidden');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!languageBtn.contains(e.target) && !languageDropdown.contains(e.target)) {
+                    languageDropdown.classList.add('hidden');
+                }
+            });
+
+            // Language selection
+            document.querySelectorAll('.language-option').forEach(option => {
+                option.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const lang = this.getAttribute('data-lang');
+                    const text = this.textContent;
+                    
+                    languageBtn.querySelector('span').textContent = text;
+                    languageDropdown.classList.add('hidden');
+                    
+                    // In a real app, you would change the language here
+                    alert(`Language changed to ${text}. Content would be translated in a real application.`);
+                });
+            });
+
+            // Voice assistant
+            voiceAssistantBtn.addEventListener('click', function() {
+                voiceModal.classList.remove('hidden');
+            });
+
+            closeVoiceModal.addEventListener('click', function() {
+                voiceModal.classList.add('hidden');
+            });
+
+            // Start listening (simulated)
+            startListeningBtn.addEventListener('click', function() {
+                document.getElementById('voiceStatus').innerHTML = `
+                    <i class="fas fa-microphone-alt text-4xl text-green-500 mb-4 animate-pulse"></i>
+                    <p>Listening... Speak now</p>
+                `;
+                
+                // Simulate voice recognition
+                setTimeout(() => {
+                    document.getElementById('voiceStatus').classList.add('hidden');
+                    document.getElementById('voiceResponse').classList.remove('hidden');
+                    document.getElementById('voiceResponse').innerHTML = `
+                        <p class="font-medium">You asked:</p>
+                        <p class="mb-3">"What fertilizer should I use for rice during germination?"</p>
+                        <p class="font-medium">Response:</p>
+                        <p>For rice during germination, use seed treatment with 2% KCl solution. Soak seeds for 12 hours to improve germination rate.</p>
+                    `;
+                }, 2000);
+            });
+
+            // Crop selection
+            cropSelector.addEventListener('change', function() {
+                loadCropData(this.value);
+                updateGrowthStagesDropdown();
+            });
+
+            // Scan button
+            scanBtn.addEventListener('click', function() {
+                scanInput.click();
+            });
+
+            scanInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    // Simulate scanning process
+                    document.querySelector('.scan-animation').innerHTML = `
+                        <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                            <div class="w-64 h-64 border-4 border-green-500 rounded-lg animate-pulse"></div>
+                        </div>
+                        <p class="text-white relative z-10">Scanning fertilizer label...</p>
+                    `;
+                    
+                    // Simulate scan completion after 2 seconds
+                    setTimeout(() => {
+                        showScanResult("Urea");
+                    }, 2000);
+                }
+            });
+        
+           // Event listener for the new "Show Information" button
+           showInfoBtn.addEventListener('click', function() {
+                    const selectedCropId = cropSelector.value;
+                    const selectedStageName = growthStagesDropdown.value;
+                    const crop = cropData[selectedCropId];
+                    
+                    if (crop) {
+                        const stage = crop.stages.find(s => s.name === selectedStageName);
+                        if (stage) {
+                            selectedStageTitle.textContent = stage.name;
+                            selectedStageDescription.textContent = stage.description;
+                            selectedStageDuration.textContent = stage.duration;
+                            
+                            selectedStageConditions.innerHTML = ''; // Clear previous conditions
+                            stage.conditions.forEach(condition => {
+                                const li = document.createElement('li');
+                                li.textContent = condition;
+                                selectedStageConditions.appendChild(li);
+                            });
+                            stageInfoDiv.classList.remove('hidden'); // Show the info div
+                        } else {
+                            stageInfoDiv.classList.add('hidden');
+                            alert('Stage information not found.');
+                        }
+                    } else {
+                        stageInfoDiv.classList.add('hidden');
+                        alert('Crop data not found.');
+                    }
+                });
+            }
+            document.addEventListener('DOMContentLoaded', function() {
+        loadCropData(cropSelector.value);
+        loadFertilizerData();
+        setupEventListeners();
+    });
+
+    function loadCropData(cropId) {
+                const crop = cropData[cropId];
+                const stageProgress = document.getElementById('stageProgress');
+                const stageDetails = document.getElementById('stageDetails');
+                
+                // Show the containers
+                stageProgress.classList.remove('hidden');
+                stageDetails.classList.remove('hidden');
+                
+                // Load first stage by default
+                loadStageDetails(crop, 0);
+            }
+
+
+            function loadStageDetails(crop, stageIndex) {
+        const stage = crop.stages[stageIndex];
+
+        // Update stage details
+        document.getElementById('stageTitle').textContent = stage.name;
+        document.getElementById('stageDescription').textContent = stage.description;
+        document.getElementById('stageDuration').textContent = stage.duration;
+        document.getElementById('stageImage').src = stage.image;
+
+        // Update conditions
+        const conditionsList = document.getElementById('stageConditions');
+        conditionsList.innerHTML = stage.conditions.map(condition => `<li>${condition}</li>`).join('');
+
+        // Update fertilizers
+        const fertilizerContainer = document.getElementById('fertilizerRecommendations');
+        
+        // Use idealFertilizers instead of recommendedFertilizerNames
+        const recommendedFertilizersForStage = stage.idealFertilizers;
+
+        if (recommendedFertilizersForStage.length > 0) {
+            fertilizerContainer.innerHTML = recommendedFertilizersForStage.map(fert => `
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-md transition">
+                    <div class="flex justify-between mb-2">
+                        <h4 class="font-medium">${fert.name}</h4>
+                        <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">${fert.type}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">NPK: ${fert.npk}</p>
+                    <div class="text-sm text-gray-700 mb-2">
+                        <span class="font-medium">Application:</span> ${fert.application}
+                    </div>
+                    <div class="text-sm text-gray-700">
+                        <span class="font-medium">Precautions:</span> ${fert.precautions}
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            fertilizerContainer.innerHTML = `
+                <div class="text-center text-gray-500 py-4">
+                    No specific fertilizer recommendations for this stage yet.
+                </div>
+            `;
+        }
+    }
+      // Load fertilizer data
+      function loadFertilizerData() {
+        const remainingFertilizersResults = document.getElementById('remainingFertilizersResults');
+        
+        remainingFertilizersResults.innerHTML = fertilizerData.map(fert => `
+            <div class="flex-none w-64">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition h-full">
+                    <img src="${fert.image}" alt="${fert.name}" class="w-full h-40 object-cover">
+                    <div class="p-4">
+                        <div class="flex justify-between mb-2">
+                            <h3 class="font-semibold">${fert.name}</h3>
+                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">${fert.type}</span>
+                        </div>
+                        <p class="text-xs text-gray-600 mb-2">NPK: ${fert.npk}</p>
+                        <p class="text-xs text-gray-700 mb-3 line-clamp-2">${fert.description}</p>
+                        <button class="w-full bg-green-600 text-white py-1 px-3 rounded hover:bg-green-700 text-xs">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    // Search functionality
+    document.getElementById('fertilizerSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+        const exactMatchesSection = document.getElementById('exactMatchesSection');
+        const exactMatchResults = document.getElementById('exactMatchResults');
+        const remainingFertilizersSection = document.getElementById('remainingFertilizersSection');
+        const remainingFertilizersResults = document.getElementById('remainingFertilizersResults');
+        // Clear previous results
+        exactMatchResults.innerHTML = '';
+        remainingFertilizersResults.innerHTML = '';
+        if (searchTerm === '') {
+            // If search is empty, show all fertilizers
+            exactMatchesSection.classList.add('hidden');
+            loadFertilizerData();
+            return;
+        }
+        // Find exact matches
+        const exactMatches = fertilizerData.filter(fert => 
+            fert.name.toLowerCase().includes(searchTerm)
+        );
+        // Find remaining fertilizers
+        const remainingFertilizers = fertilizerData.filter(fert => 
+            !fert.name.toLowerCase().includes(searchTerm)
+        );
+        // Display exact matches
+        if (exactMatches.length > 0) {
+            exactMatchesSection.classList.remove('hidden');
+            exactMatches.forEach(fert => {
+                exactMatchResults.innerHTML += `
+                    <div class="flex-none w-72">
+                        <div class="bg-green-50 border border-green-200 rounded-lg shadow-sm p-4 h-full">
+                            <div class="flex justify-between mb-2">
+                                <h3 class="font-medium">${fert.name}</h3>
+                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">${fert.type}</span>
+                            </div>
+                            <p class="text-xs text-gray-600 mb-2">NPK: ${fert.npk}</p>
+                            <p class="text-xs text-gray-700 mb-3">${fert.description}</p>
+                            <div class="text-xs text-gray-700 mb-1">
+                                <span class="font-medium">Application:</span> ${fert.application}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            exactMatchesSection.classList.add('hidden');
+        }
+        // Display remaining fertilizers
+        remainingFertilizers.forEach(fert => {
+            remainingFertilizersResults.innerHTML += `
+                <div class="flex-none w-64">
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition h-full">
+                        <img src="${fert.image}" alt="${fert.name}" class="w-full h-40 object-cover">
+                        <div class="p-4">
+                            <div class="flex justify-between mb-2">
+                                <h3 class="font-semibold">${fert.name}</h3>
+                                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">${fert.type}</span>
+                            </div>
+                            <p class="text-xs text-gray-600 mb-2">NPK: ${fert.npk}</p>
+                            <p class="text-xs text-gray-700 mb-3 line-clamp-2">${fert.description}</p>
+                            <button class="w-full bg-green-600 text-white py-1 px-3 rounded hover:bg-green-700 text-xs">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    });
+    // Initialize the fertilizer grid on page load
+    loadFertilizerData();
+            
+    function showScanResult(fertName) {
+        const fert = fertilizerData.find(f => f.name === fertName);
+
+        if (fert) {
+            scanResult.classList.remove('hidden');
+            document.getElementById('scanResultContent').innerHTML = `
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-medium text-green-600 mb-2">Fertilizer Details</h4>
+                        <div class="space-y-2 mb-4">
+                            <p class="flex justify-between"><span class="text-gray-600">Name:</span> <span class="font-medium">${fert.name}</span></p>
+                            <p class="flex justify-between"><span class="text-gray-600">Type:</span> <span class="font-medium">${fert.type}</span></p>
+                            <p class="flex justify-between"><span class="text-gray-600">NPK Ratio:</span> <span class="font-medium">${fert.npk}</span></p>
+                            <p class="flex justify-between"><span class="text-gray-600">Description:</span> <span class="font-medium">${fert.description}</span></p>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-green-600 mb-2">Application & Precautions</h4>
+                        <div class="space-y-2 mb-4">
+                            <p class="flex justify-between"><span class="text-gray-600">Application:</span> <span class="font-medium">${fert.application}</span></p>
+                            <p class="flex justify-between"><span class="text-gray-600">Precautions:</span> <span class="font-medium">${fert.precautions}</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                        <h4 class="font-medium text-green-600 mb-2">Recommended Crops</h4>
+                        <ul class="list-disc pl-5">
+                            ${fert.crops.map(crop => `<li class="text-gray-700">${crop}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            } else {
+                scanResult.classList.remove('hidden');
+                document.getElementById('scanResultContent').innerHTML = `
+                    <p class="text-red-600">No information found for the scanned fertilizer.</p>
+                `;
+            }
+        }
+
+         // Function to update the new growth stages dropdown
+         function updateGrowthStagesDropdown() {
+            const selectedCropId = cropSelector.value;
+            const crop = cropData[selectedCropId];
+            
+            growthStagesDropdown.innerHTML = ''; // Clear existing options
+
+            if (crop && crop.stages) {
+                crop.stages.forEach(stage => {
+                    const option = document.createElement('option');
+                    option.value = stage.name;
+                    option.textContent = stage.name;
+                    growthStagesDropdown.appendChild(option);
+                });
+            }
+            // Hide stageInfoDiv when crop or stage selection changes
+            stageInfoDiv.classList.add('hidden');
+        }
+</script>
+<script src="language.js"></script>
+</body>
+</html>
